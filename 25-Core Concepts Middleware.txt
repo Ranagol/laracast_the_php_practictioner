@@ -1,0 +1,61 @@
+25-Core Concepts: Middleware
+
+- Middleware thingies are in the Middleware folder, here: app\Http\Middleware.
+- And right beneath this folder is the Kernel.http.
+- The user enters to our Laravel application through our middleware, that will automatically fire.
+- The middleware is running during every request received from the user, in our application.
+- Middleware is like layers of the onion. If you want to get the core of the onion, first you have to pass through every layer of the onion.
+- In Kernel.php there is a protected $middleware property, that contains all our middleware. This is a list of all our middleware.
+- Eache middleware "layer" will do a number of checks. It can authenticate, autorise, redirect... anything.
+- Every middleware includes a method called handle(). This will be called when a request is trying to go through a layer (middlerware).
+- handle() will receive a request, review it, modify it, redirect it... If everything is OK, the handle() will pass the request to the next layer, aka next middleware.
+- This next layer will do all the same again, but it will check for different things than the previous layer.
+- Example for what middleware does: when we are not logged in, and we go to the /home page, the middleware will redirect us to the login page automatically 
+(first we have to be logged in, in order to go to the home page).
+- We can put our middleware:
+	1. into the controller, 
+	2. or the routes file (web.php). 
+- It is up to us which version we prefer. Both are OK.
+- This is an example, how can we create a middleware in the controller:
+
+	class UserController extends Controller {
+   		public function __construct() {
+      		$this->middleware('auth');
+   	}
+
+- This here is an example how we can apply the middleware in the web.php (into our routes file):
+
+	Route::get('/home', 'HomeController@index')->name('home')->middleware('auth');
+
+- The middleware('auth') part means: apply this authentication middleware. Only authenticated users can proceed, filter out everything else.
+- What is happening here: if the unsigned user wants to go to the home page, the middleware will redirect the unsingned user to the login page, instead of the home page.
+- But, the opposite can happen too with the middleware. We don't want an already logged in user to go to the login page. So we just redirect him. 
+- This redirecting will be done by a middleware (called RedirectIfAuthenticated.php)
+- Laravel provides 7 middleware functions out of the box, by default.
+- But, we can make our personalized middleware too, aside that.
+- If we want to create our middlewar, we just need to type:
+
+	php artisan make:middleware LogQueries
+	
+- (we want this middleware to log all queries).
+- We can check this new middleware in the Middleware folder.
+- This will be a global middleware, that will run for every single request.
+
+	public function handle($request, Closure $next)
+    {
+        dd('hi there');//In this example we want this middleware just to say 'hi there'. And to die.
+        return $next($request);
+    }
+- BUT, all this won't work. Because: we haven't declare, register this new middleware in the Kernel.php.
+- If we want the LogQueries middleware to run for every single request, then we have to inlcude the LogQueries into the protected $middleware, in the Kernel.php. Like this:
+
+	\App\Http\Middleware\LogQueries::class,
+	
+- Now, it will work.
+- So, we can do literally anything in the middleware. To check, redirect, use na if condition...
+- But, don't forget. There are two types of middleware. 
+
+	1. The global middleware will run for every single request.
+	2. The route specific middleware. These should not be applied for every single request. They should be applied only when we request it. Example:
+	We don't need authentication for every single request, if the user is already logged in.
+
